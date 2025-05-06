@@ -18,7 +18,7 @@
         }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4 bg-dark text-light">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         <div class="mb-3">
@@ -39,7 +39,7 @@
     </div>
 
     <table class="table table-bordered table-hover">
-        <thead class="table-light">
+        <thead>
             <tr>
                 <th>English</th>
                 <th>French</th>
@@ -47,7 +47,7 @@
                 <th>Audio</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="table-dark">
             {% for word in words %}
             <tr onclick='openModal({{ word.id }}, {{ word.english|tojson }}, {{ word.french|tojson }}, {{ word.pronunciation|tojson }}, {{ word.audio_file|tojson }})'>
                 <td>{{ word.english }}</td>

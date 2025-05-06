@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Vocabulary Topics</title>
+    <style>
+        ::placeholder {
+        color: #ccc !important;
+        opacity: 1; /* Override Firefox default */
+    }
+    </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="p-4">
+<body class="p-4 bg-dark text-light">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         <div class="mb-3">
@@ -21,16 +27,21 @@
     {% endwith %}
 
     <h2>Topics</h2>
+
+    <!-- Add Topic Form -->
     <form method="POST" action="/add_topic" class="mb-3 d-flex gap-2">
-        <input type="text" name="name" class="form-control" placeholder="New Topic" required>
+        <input type="text" name="name" class="form-control bg-dark text-light " placeholder="New Topic" required>
         <button type="submit" class="btn btn-primary">Add</button>
     </form>
-    <ul class="list-group">
+
+    <!-- Topic List -->
+    <ul class="list-group bg-dark">
         {% for topic in topics %}
-            <li class="list-group-item">
-                <a href="{{ url_for('view_topic', topic_id=topic.id) }}">{{ topic.name }}</a>
+            <li class="list-group-item bg-dark text-light border-light">
+                <a href="{{ url_for('view_topic', topic_id=topic.id) }}" >{{ topic.name }}</a>
             </li>
         {% endfor %}
     </ul>
 </body>
+
 </html>
