@@ -2,8 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ topic.name }} Vocabulary</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        .blinking {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
 </head>
 <body class="p-4">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -21,7 +34,7 @@
 
     <a href="/" class="mb-3 d-block">← Back to Topics</a>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>{{ topic.name }} Vocabulary</h2>
+        <h2>Topic {{ topic.name }}</h2>
         <button class="btn btn-primary" onclick="openModal()">+ Add</button>
     </div>
 
@@ -40,9 +53,12 @@
                 <td>{{ word.english }}</td>
                 <td>{{ word.french }}</td>
                 <td>{{ word.pronunciation }}</td>
-                <td>
+                <td onclick="event.stopPropagation(); toggleAudio({{ word.id }})" style="cursor: pointer;" title="Play/Pause" >
                     {% if word.audio_file %}
-                        <audio controls src="/{{ word.audio_file }}"></audio>
+                        <audio id="audio-{{ word.id }}" src="/{{ word.audio_file }}"></audio>
+                        <span  >
+                            <i class="bi bi-play-fill" id="icon-{{ word.id }}"></i>
+                        </span>
                     {% endif %}
                 </td>
             </tr>
@@ -74,12 +90,18 @@
                         <textarea name="pronunciation" id="pronunciation" class="form-control"></textarea>
                     </div>
                     <div class="mb-2">
-                        <label>Audio File</label>
+                        <label>Audio Recording</label>
                         <audio id="current-audio" controls style="display: none;"></audio>
-                        <input type="file" name="audio_file" id="audio-upload" class="form-control">
-                        <div class="mt-2">
+                        <input type="file" name="audio_file" id="audio-upload" class="form-control" style="display: none;">
+                        <!-- <div class="mt-2">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="startRecording()">Record</button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="stopRecording()">Stop</button>
+                        </div> -->
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="record-button" onclick="toggleRecording()">
+                                <i class="bi bi-mic-fill"></i> Record
+                            </button>
+                            <span id="record-status" class="ms-2 text-danger"></span>
                         </div>
                     </div>
               </div>
@@ -98,6 +120,10 @@
         const modal = new bootstrap.Modal(document.getElementById('wordModal'));
         let mediaRecorder;
         let audioChunks = [];
+        let stream;
+        let isRecording = false;
+        let isEditMode = false;
+        let warnedAboutEdit = false;
 
         function openModal(id = null, english = '', french = '', pronunciation = '', audio_file = '') {
             document.getElementById('modalTitle').textContent = id ? 'Edit Word' : 'Add Word';
@@ -118,6 +144,9 @@
                 audioElement.style.display = 'none';
             }
 
+            if(id) isEditMode = true;
+            else isEditMode = false;
+
             modal.show();
         }
 
@@ -128,40 +157,100 @@
             }
         }
 
-        function startRecording() {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    mediaRecorder = new MediaRecorder(stream);
-                    mediaRecorder.start();
-                    audioChunks = [];
+        function toggleRecording() {
+            const button = document.getElementById('record-button');
+            const label = document.getElementById('record-status');
 
-                    mediaRecorder.addEventListener('dataavailable', event => {
-                        audioChunks.push(event.data);
+            if (!isRecording) {
+                if (isEditMode && !warnedAboutEdit) {
+                    // Show "click again to replace" warning
+                    label.innerHTML = '⚠️ Click again to record new audio';
+                    warnedAboutEdit = true;
+                    return;
+                }
+
+                // Start recording
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(str => {
+                        stream = str;
+                        mediaRecorder = new MediaRecorder(stream);
+                        mediaRecorder.start();
+                        isRecording = true;
+                        audioChunks = [];
+
+                        mediaRecorder.addEventListener('dataavailable', event => {
+                            audioChunks.push(event.data);
+                        });
+
+                        mediaRecorder.addEventListener('stop', () => {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            const audioUrl = URL.createObjectURL(audioBlob);
+
+                            const audio = document.getElementById('current-audio');
+                            audio.src = audioUrl;
+                            audio.style.display = 'block';
+
+                            const file = new File([audioBlob], `recording_${Date.now()}.webm`, { type: 'audio/webm' });
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            document.getElementById('audio-upload').files = dataTransfer.files;
+
+                            // Release mic
+                            stream.getTracks().forEach(track => track.stop());
+                            stream = null;
+
+                            // UI: Saved state
+                            label.innerHTML = '✅ Saved';
+                            button.innerHTML = '<i class="bi bi-mic-fill"></i> Record';
+                            isRecording = false;
+                            warnedAboutEdit = false;
+
+                            // Reset UI to record state after 3s
+                            setTimeout(() => {
+                                label.innerHTML = '';
+                            }, 3000);
+                        });
+
+                        // UI: Recording state
+                        label.innerHTML = '<span class="blinking">⏺️ Recording...</span>';
+                        button.innerHTML = '<i class="bi bi-stop-fill"></i> Stop';
                     });
-
-                    mediaRecorder.addEventListener('stop', () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const audioUrl = URL.createObjectURL(audioBlob);
-
-                        // Set the audio URL to the current audio player in modal
-                        const audio = document.getElementById('current-audio');
-                        audio.src = audioUrl;
-                        audio.style.display = 'block';
-
-                        // Prepare the file to upload
-                        const file = new File([audioBlob], `recording_${Date.now()}.webm`, { type: 'audio/webm' });
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        document.getElementById('audio-upload').files = dataTransfer.files;
-                    });
-                });
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            } else {
+                // Stop recording
                 mediaRecorder.stop();
             }
         }
+
+        function toggleAudio(id) {
+            const audio = document.getElementById(`audio-${id}`);
+            if (audio.paused) {
+                audio.play();
+            } else {
+                audio.pause();
+            }
+        }
+
+        function toggleAudio(id) {
+            const audio = document.getElementById(`audio-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            
+            if (audio.paused) {
+                audio.play();
+                icon.classList.remove("bi-play-fill");
+                icon.classList.add("bi-pause-fill");
+            } else {
+                audio.pause();
+                icon.classList.remove("bi-pause-fill");
+                icon.classList.add("bi-play-fill");
+            }
+
+            // Reset icon when audio ends
+            audio.onended = () => {
+                icon.classList.remove("bi-pause-fill");
+                icon.classList.add("bi-play-fill");
+            };
+        }
+            
     </script>
 </body>
 </html>
