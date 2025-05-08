@@ -66,11 +66,15 @@
         </tbody>
     </table>
 
+    <div class="mt-5">
+        <pre>{{ topic.description }}</pre>
+    </div>
+
     <!-- Modal -->
     <div class="modal fade" id="wordModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
         <form id="word-form" method="POST" enctype="multipart/form-data">
-            <div class="modal-content">
+            <div class="modal-content bg-dark text-light">
               <div class="modal-header">
                 <h5 class="modal-title" id="modalTitle">Add Word</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -79,15 +83,15 @@
                     <input type="hidden" id="word-id" name="word_id">
                     <div class="mb-2">
                         <label>English</label>
-                        <input type="text" name="english" id="english" class="form-control" required>
+                        <input type="text" name="english" id="english" class="form-control bg-dark text-light" required>
                     </div>
                     <div class="mb-2">
                         <label>French</label>
-                        <input type="text" name="french" id="french" class="form-control" required>
+                        <input type="text" name="french" id="french" class="form-control bg-dark text-light" required>
                     </div>
                     <div class="mb-2">
                         <label>Pronunciation</label>
-                        <textarea name="pronunciation" id="pronunciation" class="form-control"></textarea>
+                        <textarea name="pronunciation" id="pronunciation" class="form-control bg-dark text-light"></textarea>
                     </div>
                     <div class="mb-2">
                         <label>Audio Recording</label>

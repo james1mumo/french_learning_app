@@ -1,2 +1,3 @@
 static/audio/
 instance/vocab.db
+__pycache__

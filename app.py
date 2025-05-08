@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from datetime import datetime
 import os
 
@@ -12,11 +13,13 @@ app.secret_key = 'your-very-secret-key'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Models
 class Topic(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -39,8 +42,10 @@ def index():
 @app.route('/add_topic', methods=['POST'])
 def add_topic():
     name = request.form.get('name')
+    description = request.form.get('description')
+    
     if name:
-        db.session.add(Topic(name=name))
+        db.session.add(Topic(name=name, description=description))
         db.session.commit()
     flash("Topic Added successfully.", "success")
     return redirect(url_for('index'))

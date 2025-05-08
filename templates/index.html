@@ -29,9 +29,12 @@
     <h2>Topics</h2>
 
     <!-- Add Topic Form -->
-    <form method="POST" action="/add_topic" class="mb-3 d-flex gap-2">
-        <input type="text" name="name" class="form-control bg-dark text-light " placeholder="New Topic" required>
-        <button type="submit" class="btn btn-primary">Add</button>
+    <form method="POST" action="/add_topic" class="mb-5 mt-5">
+        <label>New Topic Name</label>
+        <input type="text" name="name" class="form-control bg-dark text-light" required>
+        <label>Description</label>
+        <textarea name="description" id="description" class="form-control bg-dark text-light"></textarea>
+        <button type="submit" class="btn btn-primary mt-3 mb-5">Add</button>
     </form>
 
     <!-- Topic List -->
