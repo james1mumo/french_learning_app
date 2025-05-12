@@ -11,6 +11,7 @@
     }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body class="p-4 bg-dark text-light">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -33,18 +34,81 @@
         <label>New Topic Name</label>
         <input type="text" name="name" class="form-control bg-dark text-light" required>
         <label>Description</label>
-        <textarea name="description" id="description" class="form-control bg-dark text-light"></textarea>
+        <textarea name="description" class="form-control bg-dark text-light"></textarea>
         <button type="submit" class="btn btn-primary mt-3 mb-5">Add</button>
     </form>
 
+    <table class="table table-bordered table-hover w-auto">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody class="table-dark">
+            {% for topic in topics %}
+            <tr>
+                <td onclick="location.href='{{ url_for('view_topic', topic_id=topic.id) }}'" >{{ topic.name }}</td>
+                <td onclick='openModal({{ topic.id }}, {{ topic.name|tojson }}, {{ topic.description|tojson }})' style="cursor: pointer;">
+                    <i class="bi bi-pencil-square"></i>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
     <!-- Topic List -->
     <ul class="list-group bg-dark">
-        {% for topic in topics %}
-            <li class="list-group-item bg-dark text-light border-light">
-                <a href="{{ url_for('view_topic', topic_id=topic.id) }}" >{{ topic.name }}</a>
-            </li>
-        {% endfor %}
+        
     </ul>
+
+    <!-- Modal -->
+    <div class="modal fade" id="wordModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="word-form" method="POST" enctype="multipart/form-data">
+            <div class="modal-content bg-dark text-light">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Edit Topic</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                    <input type="hidden" id="word-id" name="word_id">
+                    <div class="mb-2">
+                        <label>Name</label>
+                        <input type="text" name="name" id="name" class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="mb-2">
+                        <label>Description</label>
+                        <textarea name="description" id="description" class="form-control bg-dark text-light"></textarea>
+                    </div>
+              </div>
+              <div class="modal-footer">
+                <!-- <button type="button" class="btn btn-danger me-auto" id="delete-button" style="display: none;" onclick="deleteWord()">Delete</button> -->
+                <button type="submit" class="btn btn-success" id="save-button">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function openModal(id = null, name = '', description = '') {
+            console.log('description is: ', description)
+            document.getElementById('modalTitle').textContent = id ? 'Edit Topic' : 'Add Topic';
+            document.getElementById('word-form').action = id ? `/update_topic/${id}` : `/add_topic`;
+            // document.getElementById('delete-button').style.display = id ? 'inline-block' : 'none';
+
+            document.getElementById('word-id').value = id || '';
+            document.getElementById('name').value = name;
+            document.getElementById('description').value = description;
+
+            new bootstrap.Modal(document.getElementById('wordModal')).show();
+        }
+    </script>
+    
 </body>
 
 </html>

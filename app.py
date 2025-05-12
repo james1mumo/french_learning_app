@@ -50,6 +50,15 @@ def add_topic():
     flash("Topic Added successfully.", "success")
     return redirect(url_for('index'))
 
+@app.route('/update_topic/<int:topic_id>', methods=['POST'])
+def update_topic(topic_id):
+    topic = Topic.query.get_or_404(topic_id)
+    topic.name = request.form.get('name')
+    topic.description = request.form.get('description')
+    db.session.commit()
+    flash("Topic Updated successfully.", "success")
+    return redirect(url_for('index'))
+
 @app.route('/topic/<int:topic_id>')
 def view_topic(topic_id):
     topic = Topic.query.get_or_404(topic_id)
