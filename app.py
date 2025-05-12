@@ -4,6 +4,10 @@ from flask_migrate import Migrate
 from datetime import datetime
 import os
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Change current working directory to script directory
+os.chdir(script_dir)
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vocab.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
