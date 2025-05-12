@@ -53,7 +53,7 @@
       <tbody class="table-dark">
         {% for word in words %}
         <tr
-          onclick="openModal({{ word.id }}, {{ word.english|tojson }}, {{ word.french|tojson }}, {{ word.pronunciation|tojson }}, {{ word.audio_file|tojson }})"
+          onclick='openModal({{ word.id }}, {{ word.english|tojson }}, {{ word.french|tojson }}, {{ word.pronunciation|tojson }}, {{ word.audio_file|tojson }})'
         >
           <td>{{ word.english }}</td>
           <td>{{ word.french }}</td>
