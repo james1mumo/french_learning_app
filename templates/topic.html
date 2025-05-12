@@ -46,7 +46,7 @@
         <tr>
           <th>English</th>
           <th>French</th>
-          <th onclick="toggleIPABur();">IPA</th>
+          <th onclick="toggleIPABlur();">IPA</th>
           <th>Audio</th>
         </tr>
       </thead>
@@ -263,7 +263,7 @@
         };
       }
 
-      function toggleIPABur() {
+      function toggleIPABlur() {
         const tds = document.querySelectorAll("tbody tr td.ipa");
         if (tds[0].style.filter === "blur(5px)") {
           tds.forEach((td) => (td.style.filter = ""));
@@ -273,7 +273,7 @@
       }
 
       //initialy blur all IPA pronunciations
-      toggleIPABur();
+      toggleIPABlur();
     </script>
   </body>
 </html>
