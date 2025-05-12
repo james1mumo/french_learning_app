@@ -1,260 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ topic.name }} Vocabulary</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    
-    <style>
-        .blinking {
-            animation: blink 1s infinite;
-        }
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+    <style>
+      .blinking {
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
         }
+        50% {
+          opacity: 0;
+        }
+      }
     </style>
-</head>
-<body class="p-4 bg-dark text-light">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div class="mb-3">
-        {% for category, message in messages %}
-            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-        </div>
-    {% endif %}
-    {% endwith %}
+  </head>
+  <body class="p-4 bg-dark text-light">
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+    <div class="mb-3">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
 
     <a href="/" class="mb-3 d-block">← Back to Topics</a>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Topic {{ topic.name }}</h2>
-        <button class="btn btn-primary" onclick="openModal()">+ Add</button>
+      <h2>Topic {{ topic.name }}</h2>
+      <button class="btn btn-primary" onclick="openModal()">+ Add</button>
     </div>
 
     <table class="table table-bordered table-hover w-auto">
-        <thead>
-            <tr>
-                <th>English</th>
-                <th>French</th>
-                <th>Pronunciation</th>
-                <th>Audio</th>
-            </tr>
-        </thead>
-        <tbody class="table-dark">
-            {% for word in words %}
-            <tr onclick='openModal({{ word.id }}, {{ word.english|tojson }}, {{ word.french|tojson }}, {{ word.pronunciation|tojson }}, {{ word.audio_file|tojson }})'>
-                <td>{{ word.english }}</td>
-                <td>{{ word.french }}</td>
-                <td>{{ word.pronunciation }}</td>
-                <td onclick="event.stopPropagation(); toggleAudio({{ word.id }})" style="cursor: pointer;" title="Play/Pause" >
-                    {% if word.audio_file %}
-                        <audio id="audio-{{ word.id }}" src="/{{ word.audio_file }}"></audio>
-                        <span  >
-                            <i class="bi bi-play-fill" id="icon-{{ word.id }}"></i>
-                        </span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>English</th>
+          <th>French</th>
+          <th onclick="toggleIPABur();">IPA</th>
+          <th>Audio</th>
+        </tr>
+      </thead>
+      <tbody class="table-dark">
+        {% for word in words %}
+        <tr
+          onclick="openModal({{ word.id }}, {{ word.english|tojson }}, {{ word.french|tojson }}, {{ word.pronunciation|tojson }}, {{ word.audio_file|tojson }})"
+        >
+          <td>{{ word.english }}</td>
+          <td>{{ word.french }}</td>
+          <td class="ipa" onclick="event.stopPropagation(); this.style.filter = this.style.filter === 'blur(5px)' ? 'none' : 'blur(5px)';">
+            {{ word.pronunciation }}
+          </td>
+          <td onclick="event.stopPropagation(); toggleAudio({{ word.id }})" style="cursor: pointer" title="Play/Pause">
+            {% if word.audio_file %}
+            <audio id="audio-{{ word.id }}" src="/{{ word.audio_file }}"></audio>
+            <span>
+              <i class="bi bi-play-fill" id="icon-{{ word.id }}"></i>
+            </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
 
     <div class="mt-5">
-        <pre>{{ topic.description }}</pre>
+      <pre>{{ topic.description }}</pre>
     </div>
 
     <!-- Modal -->
     <div class="modal fade" id="wordModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
         <form id="word-form" method="POST" enctype="multipart/form-data">
-            <div class="modal-content bg-dark text-light">
-              <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Add Word</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalTitle">Add Word</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="word-id" name="word_id" />
+              <div class="mb-2">
+                <label>English</label>
+                <input type="text" name="english" id="english" class="form-control bg-dark text-light" required />
               </div>
-              <div class="modal-body">
-                    <input type="hidden" id="word-id" name="word_id">
-                    <div class="mb-2">
-                        <label>English</label>
-                        <input type="text" name="english" id="english" class="form-control bg-dark text-light" required>
-                    </div>
-                    <div class="mb-2">
-                        <label>French</label>
-                        <input type="text" name="french" id="french" class="form-control bg-dark text-light" required>
-                    </div>
-                    <div class="mb-2">
-                        <label>Pronunciation</label>
-                        <textarea name="pronunciation" id="pronunciation" class="form-control bg-dark text-light"></textarea>
-                    </div>
-                    <div class="mb-2">
-                        <label>Audio Recording</label>
-                        <audio id="current-audio" controls style="display: none;"></audio>
-                        <input type="file" name="audio_file" id="audio-upload" class="form-control" style="display: none;">
-                        <!-- <div class="mt-2">
+              <div class="mb-2">
+                <label>French</label>
+                <input type="text" name="french" id="french" class="form-control bg-dark text-light" required />
+              </div>
+              <div class="mb-2">
+                <label>IPA</label>
+                <textarea name="pronunciation" id="pronunciation" class="form-control bg-dark text-light"></textarea>
+              </div>
+              <div class="mb-2">
+                <label>Audio Recording</label>
+                <audio id="current-audio" controls style="display: none"></audio>
+                <input type="file" name="audio_file" id="audio-upload" class="form-control" style="display: none" />
+                <!-- <div class="mt-2">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="startRecording()">Record</button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="stopRecording()">Stop</button>
                         </div> -->
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="record-button" onclick="toggleRecording()">
-                                <i class="bi bi-mic-fill"></i> Record
-                            </button>
-                            <span id="record-status" class="ms-2 text-danger"></span>
-                        </div>
-                    </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-danger me-auto" id="delete-button" style="display: none;" onclick="deleteWord()">Delete</button>
-                <button type="submit" class="btn btn-success" id="save-button">Save</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <div class="mt-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="record-button" onclick="toggleRecording()">
+                    <i class="bi bi-mic-fill"></i> Record
+                  </button>
+                  <span id="record-status" class="ms-2 text-danger"></span>
+                </div>
               </div>
             </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger me-auto" id="delete-button" style="display: none" onclick="deleteWord()">
+                Delete
+              </button>
+              <button type="submit" class="btn btn-success" id="save-button">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </div>
         </form>
       </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const modal = new bootstrap.Modal(document.getElementById('wordModal'));
-        let mediaRecorder;
-        let audioChunks = [];
-        let stream;
-        let isRecording = false;
-        let isEditMode = false;
-        let warnedAboutEdit = false;
+      const modal = new bootstrap.Modal(document.getElementById("wordModal"));
+      let mediaRecorder;
+      let audioChunks = [];
+      let stream;
+      let isRecording = false;
+      let isEditMode = false;
+      let warnedAboutEdit = false;
 
-        function openModal(id = null, english = '', french = '', pronunciation = '', audio_file = '') {
-            document.getElementById('modalTitle').textContent = id ? 'Edit Word' : 'Add Word';
-            document.getElementById('word-form').action = id ? `/update_word/${id}` : `/add_word/{{ topic.id }}`;
-            document.getElementById('delete-button').style.display = id ? 'inline-block' : 'none';
+      function openModal(id = null, english = "", french = "", pronunciation = "", audio_file = "") {
+        document.getElementById("modalTitle").textContent = id ? "Edit Word" : "Add Word";
+        document.getElementById("word-form").action = id ? `/update_word/${id}` : `/add_word/{{ topic.id }}`;
+        document.getElementById("delete-button").style.display = id ? "inline-block" : "none";
 
-            document.getElementById('word-id').value = id || '';
-            document.getElementById('english').value = english;
-            document.getElementById('french').value = french;
-            document.getElementById('pronunciation').value = pronunciation;
+        document.getElementById("word-id").value = id || "";
+        document.getElementById("english").value = english;
+        document.getElementById("french").value = french;
+        document.getElementById("pronunciation").value = pronunciation;
 
-            // Handle existing audio file (if editing)
-            const audioElement = document.getElementById('current-audio');
-            if (audio_file) {
-                audioElement.src = '/' + audio_file;
-                audioElement.style.display = 'block';
-            } else {
-                audioElement.style.display = 'none';
-            }
-
-            if(id) isEditMode = true;
-            else isEditMode = false;
-
-            modal.show();
+        // Handle existing audio file (if editing)
+        const audioElement = document.getElementById("current-audio");
+        if (audio_file) {
+          audioElement.src = "/" + audio_file;
+          audioElement.style.display = "block";
+        } else {
+          audioElement.style.display = "none";
         }
 
-        function deleteWord() {
-            const id = document.getElementById('word-id').value;
-            if (confirm("Are you sure you want to delete this word?")) {
-                window.location.href = `/delete_word/${id}`;
-            }
+        if (id) isEditMode = true;
+        else isEditMode = false;
+
+        modal.show();
+      }
+
+      function deleteWord() {
+        const id = document.getElementById("word-id").value;
+        if (confirm("Are you sure you want to delete this word?")) {
+          window.location.href = `/delete_word/${id}`;
+        }
+      }
+
+      function toggleRecording() {
+        const button = document.getElementById("record-button");
+        const label = document.getElementById("record-status");
+
+        if (!isRecording) {
+          if (isEditMode && !warnedAboutEdit) {
+            // Show "click again to replace" warning
+            label.innerHTML = "⚠️ Click again to record new audio";
+            warnedAboutEdit = true;
+            return;
+          }
+
+          // Start recording
+          navigator.mediaDevices.getUserMedia({ audio: true }).then((str) => {
+            stream = str;
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+            isRecording = true;
+            audioChunks = [];
+
+            mediaRecorder.addEventListener("dataavailable", (event) => {
+              audioChunks.push(event.data);
+            });
+
+            mediaRecorder.addEventListener("stop", () => {
+              const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+              const audioUrl = URL.createObjectURL(audioBlob);
+
+              const audio = document.getElementById("current-audio");
+              audio.src = audioUrl;
+              audio.style.display = "block";
+
+              const file = new File([audioBlob], `recording_${Date.now()}.webm`, { type: "audio/webm" });
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              document.getElementById("audio-upload").files = dataTransfer.files;
+
+              // Release mic
+              stream.getTracks().forEach((track) => track.stop());
+              stream = null;
+
+              // UI: Saved state
+              label.innerHTML = "✅ Saved";
+              button.innerHTML = '<i class="bi bi-mic-fill"></i> Record';
+              isRecording = false;
+              warnedAboutEdit = false;
+
+              // Reset UI to record state after 3s
+              setTimeout(() => {
+                label.innerHTML = "";
+              }, 3000);
+            });
+
+            // UI: Recording state
+            label.innerHTML = '<span class="blinking">⏺️ Recording...</span>';
+            button.innerHTML = '<i class="bi bi-stop-fill"></i> Stop';
+          });
+        } else {
+          // Stop recording
+          mediaRecorder.stop();
+        }
+      }
+
+      function toggleAudio(id) {
+        const audio = document.getElementById(`audio-${id}`);
+        if (audio.paused) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      }
+
+      function toggleAudio(id) {
+        const audio = document.getElementById(`audio-${id}`);
+        const icon = document.getElementById(`icon-${id}`);
+
+        if (audio.paused) {
+          audio.play();
+          icon.classList.remove("bi-play-fill");
+          icon.classList.add("bi-pause-fill");
+        } else {
+          audio.pause();
+          icon.classList.remove("bi-pause-fill");
+          icon.classList.add("bi-play-fill");
         }
 
-        function toggleRecording() {
-            const button = document.getElementById('record-button');
-            const label = document.getElementById('record-status');
+        // Reset icon when audio ends
+        audio.onended = () => {
+          icon.classList.remove("bi-pause-fill");
+          icon.classList.add("bi-play-fill");
+        };
+      }
 
-            if (!isRecording) {
-                if (isEditMode && !warnedAboutEdit) {
-                    // Show "click again to replace" warning
-                    label.innerHTML = '⚠️ Click again to record new audio';
-                    warnedAboutEdit = true;
-                    return;
-                }
-
-                // Start recording
-                navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(str => {
-                        stream = str;
-                        mediaRecorder = new MediaRecorder(stream);
-                        mediaRecorder.start();
-                        isRecording = true;
-                        audioChunks = [];
-
-                        mediaRecorder.addEventListener('dataavailable', event => {
-                            audioChunks.push(event.data);
-                        });
-
-                        mediaRecorder.addEventListener('stop', () => {
-                            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                            const audioUrl = URL.createObjectURL(audioBlob);
-
-                            const audio = document.getElementById('current-audio');
-                            audio.src = audioUrl;
-                            audio.style.display = 'block';
-
-                            const file = new File([audioBlob], `recording_${Date.now()}.webm`, { type: 'audio/webm' });
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(file);
-                            document.getElementById('audio-upload').files = dataTransfer.files;
-
-                            // Release mic
-                            stream.getTracks().forEach(track => track.stop());
-                            stream = null;
-
-                            // UI: Saved state
-                            label.innerHTML = '✅ Saved';
-                            button.innerHTML = '<i class="bi bi-mic-fill"></i> Record';
-                            isRecording = false;
-                            warnedAboutEdit = false;
-
-                            // Reset UI to record state after 3s
-                            setTimeout(() => {
-                                label.innerHTML = '';
-                            }, 3000);
-                        });
-
-                        // UI: Recording state
-                        label.innerHTML = '<span class="blinking">⏺️ Recording...</span>';
-                        button.innerHTML = '<i class="bi bi-stop-fill"></i> Stop';
-                    });
-            } else {
-                // Stop recording
-                mediaRecorder.stop();
-            }
+      function toggleIPABur() {
+        const tds = document.querySelectorAll("tbody tr td.ipa");
+        if (tds[0].style.filter === "blur(5px)") {
+          tds.forEach((td) => (td.style.filter = ""));
+        } else {
+          tds.forEach((td) => (td.style.filter = "blur(5px)"));
         }
+      }
 
-        function toggleAudio(id) {
-            const audio = document.getElementById(`audio-${id}`);
-            if (audio.paused) {
-                audio.play();
-            } else {
-                audio.pause();
-            }
-        }
-
-        function toggleAudio(id) {
-            const audio = document.getElementById(`audio-${id}`);
-            const icon = document.getElementById(`icon-${id}`);
-            
-            if (audio.paused) {
-                audio.play();
-                icon.classList.remove("bi-play-fill");
-                icon.classList.add("bi-pause-fill");
-            } else {
-                audio.pause();
-                icon.classList.remove("bi-pause-fill");
-                icon.classList.add("bi-play-fill");
-            }
-
-            // Reset icon when audio ends
-            audio.onended = () => {
-                icon.classList.remove("bi-pause-fill");
-                icon.classList.add("bi-play-fill");
-            };
-        }
-            
+      //initialy blur all IPA pronunciations
+      toggleIPABur();
     </script>
-</body>
+  </body>
 </html>
